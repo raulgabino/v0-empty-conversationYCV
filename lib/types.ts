@@ -1,5 +1,14 @@
 // Core types for Your City Vibes app
-export type VibeCode = "chill-cafe" | "arte-cultura"
+export type VibeCode =
+  | "chill-cafe"
+  | "arte-cultura"
+  | "BELLAQUEO"
+  | "STREET_FOOD"
+  | "LIVE_MUSIC"
+  | "MIRADORES_FOTOS"
+  | "DEPORTES_JUEGO"
+  | "FAMILY_KIDS"
+
 export type CityId = "ciudad-victoria" | "monterrey" | "cdmx"
 export type TravelMode = "walking" | "driving"
 
@@ -48,6 +57,12 @@ export interface RouteInfo {
   gmaps_url: string
 }
 
+export interface BellaqueoExtras {
+  temas_sugeridos?: string[]
+  plan_b?: string
+  safety_tips?: string[]
+}
+
 export interface YCVResponse {
   input: UserInput
   vibe: DetectedVibe
@@ -57,6 +72,7 @@ export interface YCVResponse {
     title: string
     subtitle: string
   }
+  extras?: BellaqueoExtras
 }
 
 export interface UICard {
