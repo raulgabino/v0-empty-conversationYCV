@@ -1,11 +1,7 @@
-import { generateObject, streamObject } from "ai"
-import { openai } from "@ai-sdk/openai"
 import { z } from "zod"
 import type { UserInput, YCVResponse } from "./types"
 import { DATASET } from "./dataset"
-import { ORCHESTRATOR_SYSTEM_PROMPT } from "./ai-prompts"
 import { buildGoogleMapsUrl, orderPlacesByProximity } from "./utils-ycv"
-import { createStreamableValue } from "ai/rsc"
 
 // Zod schemas for validation
 const PlaceSchema = z.object({
@@ -63,50 +59,13 @@ const YCVResponseSchema = z.object({
 })
 
 export class YCVAIService {
-  private model = openai("gpt-4o-mini")
-  private useOpenAI = !!process.env.OPENAI_API_KEY
-
   async generateCityVibes(input: UserInput): Promise<YCVResponse> {
     try {
-      if (this.useOpenAI) {
-        // Proceso de IA unificado en un solo paso
-        return await this.runAIGeneration(input)
-      } else {
-        // Mantener el mock inteligente como fallback principal
-        return this.generateMockResponse(input)
-      }
-    } catch (error) {
-      console.error("Error en generateCityVibes, usando fallback:", error)
       return this.generateMockResponse(input)
+    } catch (error) {
+      console.error("Error en generateCityVibes:", error)
+      throw error
     }
-  }
-
-  // Lógica de IA unificada y optimizada
-  private async runAIGeneration(input: UserInput): Promise<YCVResponse> {
-    // 1. Filtrar el dataset ANTES de enviarlo a la IA
-    const cityData = DATASET.cities.find((c) => c.id === input.city_id)
-    if (!cityData) {
-      throw new Error(`Ciudad no encontrada en el dataset: ${input.city_id}`)
-    }
-    const cityContext = {
-      id: cityData.id,
-      name: cityData.name,
-      places: cityData.places,
-    }
-
-    const systemMessage = `${ORCHESTRATOR_SYSTEM_PROMPT}\n\nDATASET_CONTEXTO_CIUDAD: ${JSON.stringify(cityContext)}`
-    const userMessage = JSON.stringify(input)
-
-    // 2. Realizar una ÚNICA llamada a la IA
-    const result = await generateObject({
-      model: this.model,
-      system: systemMessage,
-      prompt: userMessage,
-      schema: YCVResponseSchema,
-      temperature: 0.4, // Un poco más de creatividad controlada
-    })
-
-    return result.object as YCVResponse
   }
 
   // El sistema de mock no cambia, sigue siendo nuestro excelente plan B
@@ -175,34 +134,6 @@ export class YCVAIService {
       },
       ui_copy: uiCopy,
     }
-  }
-
-  async streamCityVibes(input: UserInput) {
-    // Si no hay API key, devolvemos el mock de forma "streameada"
-    if (!this.useOpenAI) {
-      const mockResponse = this.generateMockResponse(input)
-      const streamable = createStreamableValue(mockResponse)
-      return streamable.value
-    }
-
-    const cityData = DATASET.cities.find((c) => c.id === input.city_id)
-    if (!cityData) throw new Error(`Ciudad no encontrada: ${input.city_id}`)
-
-    const cityContext = { id: cityData.id, name: cityData.name, places: cityData.places }
-    const systemMessage = `${ORCHESTRATOR_SYSTEM_PROMPT}\n\nDATASET_CONTEXTO_CIUDAD: ${JSON.stringify(cityContext)}`
-    const userMessage = JSON.stringify(input)
-
-    // Usamos streamObject en lugar de generateObject
-    const result = await streamObject({
-      model: this.model,
-      system: systemMessage,
-      prompt: userMessage,
-      schema: YCVResponseSchema,
-      temperature: 0.4,
-    })
-
-    // Devolvemos el stream parcial del objeto
-    return result.partialObjectStream
   }
 }
 
