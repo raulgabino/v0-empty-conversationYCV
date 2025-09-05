@@ -1,10 +1,11 @@
-import { generateObject } from "ai"
+import { generateObject, streamObject } from "ai"
 import { openai } from "@ai-sdk/openai"
 import { z } from "zod"
 import type { UserInput, YCVResponse } from "./types"
 import { DATASET } from "./dataset"
 import { ORCHESTRATOR_SYSTEM_PROMPT } from "./ai-prompts"
 import { buildGoogleMapsUrl, orderPlacesByProximity } from "./utils-ycv"
+import { createStreamableValue } from "ai/rsc"
 
 // Zod schemas for validation
 const PlaceSchema = z.object({
@@ -174,6 +175,34 @@ export class YCVAIService {
       },
       ui_copy: uiCopy,
     }
+  }
+
+  async streamCityVibes(input: UserInput) {
+    // Si no hay API key, devolvemos el mock de forma "streameada"
+    if (!this.useOpenAI) {
+      const mockResponse = this.generateMockResponse(input)
+      const streamable = createStreamableValue(mockResponse)
+      return streamable.value
+    }
+
+    const cityData = DATASET.cities.find((c) => c.id === input.city_id)
+    if (!cityData) throw new Error(`Ciudad no encontrada: ${input.city_id}`)
+
+    const cityContext = { id: cityData.id, name: cityData.name, places: cityData.places }
+    const systemMessage = `${ORCHESTRATOR_SYSTEM_PROMPT}\n\nDATASET_CONTEXTO_CIUDAD: ${JSON.stringify(cityContext)}`
+    const userMessage = JSON.stringify(input)
+
+    // Usamos streamObject en lugar de generateObject
+    const result = await streamObject({
+      model: this.model,
+      system: systemMessage,
+      prompt: userMessage,
+      schema: YCVResponseSchema,
+      temperature: 0.4,
+    })
+
+    // Devolvemos el stream parcial del objeto
+    return result.partialObjectStream
   }
 }
 

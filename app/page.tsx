@@ -3,19 +3,21 @@
 import { useState } from "react"
 import { CitySelector } from "@/components/city-selector"
 import { VibeInput } from "@/components/vibe-input"
+import { TransportSelector } from "@/components/transport-selector"
 import { ResultsDisplay } from "@/components/results-display"
 import { ErrorDisplay } from "@/components/error-display"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { presentForUI } from "@/lib/ui-presenter"
 import { validateCity, validateVibeText, getErrorMessage } from "@/lib/validation"
 import { useToast } from "@/hooks/use-toast"
-import type { CityId, YCVResponse, UIPresentation } from "@/lib/types"
+import type { CityId, TravelMode, YCVResponse, UIPresentation } from "@/lib/types"
 
-type AppState = "city-selection" | "vibe-input" | "results" | "error"
+type AppState = "city-selection" | "transport-selection" | "vibe-input" | "results" | "error"
 
 export default function HomePage() {
   const [state, setState] = useState<AppState>("city-selection")
   const [selectedCity, setSelectedCity] = useState<CityId | null>(null)
+  const [selectedMode, setSelectedMode] = useState<TravelMode>("walking")
   const [isLoading, setIsLoading] = useState(false)
   const [results, setResults] = useState<UIPresentation | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -34,73 +36,47 @@ export default function HomePage() {
 
     setSelectedCity(city)
     setError(null)
+    setState("transport-selection")
+  }
+
+  const handleModeSelect = (mode: TravelMode) => {
+    setSelectedMode(mode)
     setState("vibe-input")
   }
 
   const handleVibeSubmit = async (vibeText: string) => {
-    if (!selectedCity) {
-      toast({
-        title: "Error",
-        description: "Por favor selecciona una ciudad primero",
-        variant: "destructive",
-      })
-      return
-    }
+    if (!selectedCity) return
 
     const validation = validateVibeText(vibeText)
     if (!validation.valid) {
-      toast({
-        title: "Error",
-        description: validation.error,
-        variant: "destructive",
-      })
+      toast({ title: "Error", description: validation.error, variant: "destructive" })
       return
     }
 
     setIsLoading(true)
     setError(null)
+    setResults(null)
+    setState("results")
 
     try {
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
-
       const response = await fetch("/api/generate-vibes", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           city_id: selectedCity,
           user_text: vibeText,
-          mode: "walking",
+          mode: selectedMode,
           max_stops: 4,
         }),
-        signal: controller.signal,
       })
 
-      clearTimeout(timeoutId)
-
       if (!response.ok) {
-        if (response.status === 429) {
-          throw new Error("Demasiadas solicitudes. Espera un momento e intenta de nuevo.")
-        }
-        if (response.status >= 500) {
-          throw new Error("Error del servidor. Intenta de nuevo en unos momentos.")
-        }
-
         const errorData = await response.json().catch(() => ({}))
         throw new Error(errorData.message || "Error al generar el plan")
       }
 
       const data: YCVResponse = await response.json()
-
-      if (!data || !data.selection || data.selection.length === 0) {
-        throw new Error("No se encontraron lugares para tu búsqueda. Intenta con una descripción diferente.")
-      }
-
-      const uiData = presentForUI(data)
-      setResults(uiData)
-      setState("results")
+      setResults(presentForUI(data))
 
       toast({
         title: "¡Plan creado!",
@@ -108,16 +84,10 @@ export default function HomePage() {
       })
     } catch (error) {
       console.error("Error generating vibes:", error)
-
       const errorMessage = getErrorMessage(error)
       setError(errorMessage)
       setState("error")
-
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      })
+      toast({ title: "Error", description: errorMessage, variant: "destructive" })
     } finally {
       setIsLoading(false)
     }
@@ -126,6 +96,7 @@ export default function HomePage() {
   const handleNewSearch = () => {
     setState("city-selection")
     setSelectedCity(null)
+    setSelectedMode("walking")
     setResults(null)
     setError(null)
   }
@@ -159,9 +130,15 @@ export default function HomePage() {
               </div>
             )}
 
+            {state === "transport-selection" && (
+              <TransportSelector selectedMode={selectedMode} onModeSelect={handleModeSelect} />
+            )}
+
             {state === "vibe-input" && <VibeInput onSubmit={handleVibeSubmit} isLoading={isLoading} />}
 
-            {state === "results" && results && <ResultsDisplay results={results} onNewSearch={handleNewSearch} />}
+            {state === "results" && (
+              <ResultsDisplay results={results} isLoading={isLoading && !results} onNewSearch={handleNewSearch} />
+            )}
 
             {state === "error" && error && (
               <ErrorDisplay

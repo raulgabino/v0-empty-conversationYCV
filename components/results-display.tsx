@@ -7,11 +7,48 @@ import { MapPin, ExternalLink } from "lucide-react"
 import type { UIPresentation } from "@/lib/types"
 
 interface ResultsDisplayProps {
-  results: UIPresentation
+  results: UIPresentation | null
+  isLoading?: boolean
   onNewSearch: () => void
 }
 
-export function ResultsDisplay({ results, onNewSearch }: ResultsDisplayProps) {
+function SkeletonLoader() {
+  return (
+    <div className="w-full max-w-4xl mx-auto space-y-6">
+      <Card className="animate-pulse">
+        <CardHeader className="text-center space-y-4">
+          <div className="flex justify-center">
+            <div className="h-8 w-32 bg-muted rounded-full"></div>
+          </div>
+          <div className="space-y-2">
+            <div className="h-8 w-3/4 mx-auto bg-muted rounded-md"></div>
+            <div className="h-6 w-1/2 mx-auto bg-muted rounded-md"></div>
+          </div>
+        </CardHeader>
+      </Card>
+      <div className="grid gap-4 md:grid-cols-2">
+        {[...Array(4)].map((_, index) => (
+          <Card key={index} className="animate-pulse">
+            <CardContent className="p-6">
+              <div className="h-6 w-3/5 bg-muted rounded-md mb-3"></div>
+              <div className="h-4 w-4/5 bg-muted rounded-md"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function ResultsDisplay({ results, isLoading, onNewSearch }: ResultsDisplayProps) {
+  if (isLoading) {
+    return <SkeletonLoader />
+  }
+
+  if (!results) {
+    return null
+  }
+
   const handleOpenRoute = () => {
     window.open(results.cta.url, "_blank", "noopener,noreferrer")
   }
@@ -23,7 +60,7 @@ export function ResultsDisplay({ results, onNewSearch }: ResultsDisplayProps) {
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
             <Badge variant="secondary" className="text-sm px-4 py-2">
-              {results.header.badge === "chill-cafe" ? "Chill & Café" : "Arte & Cultura"}
+              {results.header.badge.replace(/_/g, " ").replace(/-/g, " ")}
             </Badge>
           </div>
           <div className="space-y-2">

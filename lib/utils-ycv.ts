@@ -137,5 +137,21 @@ export function getCategoryDisplayText(category: string): string {
 
 // Get vibe display text
 export function getVibeDisplayText(vibe: VibeCode): string {
-  return vibe === "chill-cafe" ? "Chill & Café" : "Arte & Cultura"
+  const vibeMap: Record<VibeCode, string> = {
+    "chill-cafe": "Chill & Café",
+    "arte-cultura": "Arte & Cultura",
+    BELLAQUEO: "Bellaqueo",
+    STREET_FOOD: "Comida Callejera",
+    LIVE_MUSIC: "Música en Vivo",
+    MIRADORES_FOTOS: "Miradores & Fotos",
+    DEPORTES_JUEGO: "Deportes & Juego",
+    FAMILY_KIDS: "Familiar & Niños",
+  }
+
+  return vibeMap[vibe] || vibe
+}
+
+// Get travel mode display text
+export function getTravelModeDisplayText(mode: TravelMode): string {
+  return mode === "walking" ? "Caminando" : "En Coche"
 }
