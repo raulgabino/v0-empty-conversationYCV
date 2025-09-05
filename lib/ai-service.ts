@@ -18,6 +18,12 @@ const PlaceSchema = z.object({
       "MIRADORES_FOTOS",
       "DEPORTES_JUEGO",
       "FAMILY_KIDS",
+      "NIGHTLIFE",
+      "SHOPPING",
+      "FOOD_GOURMET",
+      "LOCAL_AUTHENTIC",
+      "CHILL_CAFE",
+      "ARTE_CULTURA",
     ]),
   ),
   address: z.string(),
@@ -42,6 +48,12 @@ const YCVResponseSchema = z.object({
       "MIRADORES_FOTOS",
       "DEPORTES_JUEGO",
       "FAMILY_KIDS",
+      "NIGHTLIFE",
+      "SHOPPING",
+      "FOOD_GOURMET",
+      "LOCAL_AUTHENTIC",
+      "CHILL_CAFE",
+      "ARTE_CULTURA",
     ]),
     confidence: z.number().min(0).max(1),
     keywords: z.array(z.string()),
@@ -75,43 +87,86 @@ export class YCVAIService {
       throw new Error(`City ${input.city_id} not found`)
     }
 
-    // Simple vibe detection based on keywords
+    // Enhanced vibe detection with all available vibes
     const userTextLower = input.user_text.toLowerCase()
     let detectedVibe: any = "arte-cultura" // Default vibe
 
     const vibeKeywords: { [key: string]: string[] } = {
-      "chill-cafe": ["café", "coffee", "tranquilo", "relax", "chill", "quieto"],
-      "arte-cultura": ["arte", "cultura", "museo", "historia", "galería"],
-      BELLAQUEO: ["fiesta", "noche", "antro", "bar", "reggaeton"],
-      STREET_FOOD: ["tacos", "calle", "comida", "garnacha", "mercado"],
-      LIVE_MUSIC: ["música en vivo", "concierto", "banda", "show"],
-      MIRADORES_FOTOS: ["vista", "fotos", "mirador", "paisaje", "panorámica"],
-      DEPORTES_JUEGO: ["deporte", "juego", "estadio", "partido", "ejercicio"],
-      FAMILY_KIDS: ["familia", "niños", "parque", "divertido", "familiar"],
+      "chill-cafe": ["café", "coffee", "tranquilo", "relax", "chill", "quieto", "trabajo", "wifi"],
+      CHILL_CAFE: ["café", "coffee", "tranquilo", "relax", "chill", "quieto", "trabajo", "wifi"],
+      "arte-cultura": ["arte", "cultura", "museo", "historia", "galería", "cultural"],
+      ARTE_CULTURA: ["arte", "cultura", "museo", "historia", "galería", "cultural"],
+      BELLAQUEO: ["fiesta", "noche", "antro", "bar", "reggaeton", "perreo", "baile", "party"],
+      STREET_FOOD: ["tacos", "calle", "comida", "garnacha", "mercado", "street food", "antojitos"],
+      LIVE_MUSIC: ["música en vivo", "concierto", "banda", "show", "música", "live", "cantante"],
+      MIRADORES_FOTOS: ["vista", "fotos", "mirador", "paisaje", "panorámica", "selfie", "instagram"],
+      DEPORTES_JUEGO: ["deporte", "juego", "estadio", "partido", "ejercicio", "futbol", "basketball"],
+      FAMILY_KIDS: ["familia", "niños", "parque", "divertido", "familiar", "kids", "children"],
+      NIGHTLIFE: ["noche", "vida nocturna", "bares", "clubs", "drinks", "cocktails", "copas"],
+      SHOPPING: ["compras", "shopping", "tiendas", "mall", "centro comercial", "boutique"],
+      FOOD_GOURMET: ["restaurante", "gourmet", "fine dining", "chef", "gastronomía", "comida fina"],
+      LOCAL_AUTHENTIC: ["auténtico", "local", "tradicional", "típico", "regional", "genuino"],
     }
 
+    // Find best matching vibe
+    let bestMatch = { vibe: "arte-cultura", score: 0 }
+
     for (const vibe in vibeKeywords) {
-      if (vibeKeywords[vibe].some((keyword) => userTextLower.includes(keyword))) {
-        detectedVibe = vibe
-        break
+      const matches = vibeKeywords[vibe].filter((keyword) => userTextLower.includes(keyword)).length
+      if (matches > bestMatch.score) {
+        bestMatch = { vibe, score: matches }
       }
     }
 
-    // Filter places by detected vibe
-    const matchingPlaces = cityData.places
-      .filter((place) => place.vibes.includes(detectedVibe))
-      .slice(0, input.max_stops || 4)
+    detectedVibe = bestMatch.vibe
+
+    // Filter places by detected vibe with fallback to similar vibes
+    let matchingPlaces = cityData.places.filter((place) =>
+      place.vibes.some(
+        (vibe) =>
+          vibe.toLowerCase() === detectedVibe.toLowerCase() ||
+          vibe.replace("_", "-").toLowerCase() === detectedVibe.replace("_", "-").toLowerCase(),
+      ),
+    )
+
+    // If no matches, try broader categories
+    if (matchingPlaces.length === 0) {
+      matchingPlaces = cityData.places.filter(
+        (place) => place.vibes.includes("arte-cultura") || place.vibes.includes("ARTE_CULTURA"),
+      )
+    }
+
+    // Randomize selection to ensure variety
+    const shuffled = [...matchingPlaces].sort(() => Math.random() - 0.5)
+    const selectedPlaces = shuffled.slice(0, input.max_stops || 4)
 
     // Order places optimally
-    const orderedPlaces = orderPlacesByProximity(matchingPlaces)
+    const orderedPlaces = orderPlacesByProximity(selectedPlaces)
 
     // Generate Google Maps URL
     const gmapsUrl = buildGoogleMapsUrl(orderedPlaces, input.mode || "walking")
 
     // Generate UI copy based on vibe
+    const vibeNames: { [key: string]: string } = {
+      "chill-cafe": "Cafés y Relax",
+      CHILL_CAFE: "Cafés y Relax",
+      "arte-cultura": "Arte y Cultura",
+      ARTE_CULTURA: "Arte y Cultura",
+      BELLAQUEO: "Vida Nocturna Urbana",
+      STREET_FOOD: "Comida Callejera",
+      LIVE_MUSIC: "Música en Vivo",
+      MIRADORES_FOTOS: "Spots para Fotos",
+      DEPORTES_JUEGO: "Deportes y Juegos",
+      FAMILY_KIDS: "Familiar con Niños",
+      NIGHTLIFE: "Vida Nocturna",
+      SHOPPING: "Compras",
+      FOOD_GOURMET: "Gastronomía Gourmet",
+      LOCAL_AUTHENTIC: "Auténtico Local",
+    }
+
     const uiCopy = {
-      title: `Ruta Sugerida en ${cityData.name}`,
-      subtitle: "Un plan genial basado en tu vibra",
+      title: `${vibeNames[detectedVibe] || "Ruta Sugerida"} en ${cityData.name}`,
+      subtitle: `${selectedPlaces.length} lugares perfectos para tu vibe`,
     }
 
     return {
@@ -123,10 +178,10 @@ export class YCVAIService {
       },
       vibe: {
         vibe_code: detectedVibe,
-        confidence: 0.85, // Mock confidence
+        confidence: bestMatch.score > 0 ? 0.9 : 0.7,
         keywords: vibeKeywords[detectedVibe] || [],
       },
-      selection: matchingPlaces,
+      selection: selectedPlaces,
       route: {
         mode: input.mode || "walking",
         ordered: orderedPlaces,
