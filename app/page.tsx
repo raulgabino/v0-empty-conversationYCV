@@ -134,7 +134,9 @@ export default function HomePage() {
               <TransportSelector selectedMode={selectedMode} onModeSelect={handleModeSelect} />
             )}
 
-            {state === "vibe-input" && <VibeInput onSubmit={handleVibeSubmit} isLoading={isLoading} />}
+            {state === "vibe-input" && (
+              <VibeInput onSubmit={handleVibeSubmit} isLoading={isLoading} selectedCity={selectedCity} />
+            )}
 
             {state === "results" && (
               <ResultsDisplay results={results} isLoading={isLoading && !results} onNewSearch={handleNewSearch} />

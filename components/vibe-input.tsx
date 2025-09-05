@@ -1,29 +1,31 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2 } from "lucide-react"
+import { Loader2, Lightbulb } from "lucide-react"
 import { validateVibeText } from "@/lib/validation"
+import { SuggestionService } from "@/lib/suggestion-service"
 
 interface VibeInputProps {
   onSubmit: (text: string) => void
   isLoading?: boolean
+  selectedCity?: string
 }
 
-const VIBE_SUGGESTIONS = [
-  "plan tranqui con café y parque",
-  "quiero arte y cultura",
-  "día relajado para fotos",
-  "explorar museos y historia",
-  "ambiente chill para caminar",
-  "descubrir lugares icónicos",
-]
-
-export function VibeInput({ onSubmit, isLoading = false }: VibeInputProps) {
+export function VibeInput({ onSubmit, isLoading = false, selectedCity }: VibeInputProps) {
   const [text, setText] = useState("")
   const [validationError, setValidationError] = useState<string | null>(null)
+
+  const smartSuggestions = useMemo(() => {
+    if (!selectedCity) return []
+    return SuggestionService.generateSmartSuggestions(selectedCity)
+  }, [selectedCity])
+
+  const filteredSuggestions = useMemo(() => {
+    return SuggestionService.filterSuggestionsByInput(smartSuggestions, text)
+  }, [smartSuggestions, text])
 
   const handleSubmit = () => {
     const validation = validateVibeText(text)
@@ -71,23 +73,30 @@ export function VibeInput({ onSubmit, isLoading = false }: VibeInputProps) {
             <p className="text-xs text-muted-foreground">{text.length}/500 caracteres</p>
           </div>
 
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">O elige una sugerencia:</p>
-            <div className="flex flex-wrap gap-2">
-              {VIBE_SUGGESTIONS.map((suggestion, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleSuggestionClick(suggestion)}
-                  disabled={isLoading}
-                  className="text-xs"
-                >
-                  {suggestion}
-                </Button>
-              ))}
+          {selectedCity && filteredSuggestions.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="h-4 w-4 text-primary" />
+                <p className="text-sm text-muted-foreground">
+                  {text.trim() ? "Sugerencias relacionadas:" : "Ideas para tu ciudad:"}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {filteredSuggestions.map((suggestion, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSuggestionClick(suggestion.text)}
+                    disabled={isLoading}
+                    className="text-xs hover:bg-primary/10 hover:border-primary/20"
+                  >
+                    {suggestion.text}
+                  </Button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <Button
             onClick={handleSubmit}
