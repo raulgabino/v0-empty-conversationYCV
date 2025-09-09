@@ -13,48 +13,82 @@ const CITIES = [
     name: "Monterrey",
     subtitle: "Nuevo León",
     description: "Montañas, museos y cultura regia",
+    image: "/monterrey-mexico-cityscape-with-cerro-de-la-silla-.jpg",
+    gradient: "from-blue-500/20 to-purple-500/20",
   },
   {
     id: "cdmx" as CityId,
     name: "Ciudad de México",
     subtitle: "CDMX",
     description: "Arte, parques y vida cosmopolita",
+    image: "/mexico-city-cdmx-skyline-with-colorful-buildings-a.jpg",
+    gradient: "from-emerald-500/20 to-cyan-500/20",
   },
   {
     id: "ciudad-victoria" as CityId,
     name: "Ciudad Victoria",
     subtitle: "Tamaulipas",
     description: "Historia, naturaleza y tranquilidad",
+    image: "/ciudad-victoria-tamaulipas-historic-center-with-co.jpg",
+    gradient: "from-orange-500/20 to-pink-500/20",
   },
 ]
 
 export function CitySelector({ selectedCity, onCitySelect }: CitySelectorProps) {
   return (
-    <div className="space-y-4">
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-foreground">¿Dónde quieres explorar?</h2>
-        <p className="text-muted-foreground">Selecciona tu ciudad para descubrir lugares increíbles</p>
+    <div className="space-y-8">
+      <div className="text-center space-y-4">
+        <h2 className="text-3xl md:text-4xl font-bold text-foreground text-balance">¿Dónde quieres explorar?</h2>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
+          Selecciona tu ciudad para descubrir lugares increíbles que conecten con tu vibe
+        </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {CITIES.map((city) => (
+      <div className="grid gap-8 md:grid-cols-3">
+        {CITIES.map((city, index) => (
           <Card
             key={city.id}
-            className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
-              selectedCity === city.id ? "ring-2 ring-primary bg-primary/5" : "hover:bg-muted/50"
+            className={`group cursor-pointer transition-all duration-500 hover:scale-105 hover:shadow-2xl overflow-hidden ${
+              selectedCity === city.id ? "ring-4 ring-primary shadow-2xl animate-pulse-glow" : "hover:shadow-xl"
             }`}
             onClick={() => onCitySelect(city.id)}
+            style={{ animationDelay: `${index * 0.1}s` }}
           >
-            <CardContent className="p-6 text-center space-y-2">
-              <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <div className="w-8 h-8 bg-primary rounded-full" />
+            <div className="relative h-48 overflow-hidden">
+              <img
+                src={city.image || "/placeholder.svg"}
+                alt={`Vista de ${city.name}`}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+              <div
+                className={`absolute inset-0 bg-gradient-to-t ${city.gradient} group-hover:opacity-80 transition-opacity duration-300`}
+              />
+
+              <div className="absolute bottom-4 left-4 text-white">
+                <h3 className="font-bold text-xl text-shadow-lg">{city.name}</h3>
+                <p className="text-sm opacity-90">{city.subtitle}</p>
               </div>
-              <h3 className="font-semibold text-lg text-card-foreground">{city.name}</h3>
-              <p className="text-sm text-primary font-medium">{city.subtitle}</p>
-              <p className="text-sm text-muted-foreground">{city.description}</p>
+            </div>
+
+            <CardContent className="p-6 space-y-3">
+              <p className="text-card-foreground text-center font-medium">{city.description}</p>
+
+              {selectedCity === city.id && (
+                <div className="flex items-center justify-center space-x-2 text-primary">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                  <span className="text-sm font-medium">Seleccionada</span>
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      <div className="text-center">
+        <p className="text-muted-foreground italic">
+          Cada ciudad tiene su propia personalidad. ¿Cuál resuena contigo hoy?
+        </p>
       </div>
     </div>
   )

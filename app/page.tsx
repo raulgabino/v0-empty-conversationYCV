@@ -112,20 +112,25 @@ export default function HomePage() {
 
   return (
     <ErrorBoundary>
-      <main className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-4">Your City Vibes</h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+      <main className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
+        <div className="container mx-auto px-4 py-12">
+          <div className="text-center mb-16 space-y-6">
+            <div className="animate-float">
+              <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent mb-6">
+                Your City Vibes
+              </h1>
+            </div>
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto text-pretty leading-relaxed">
               Descubre los lugares perfectos para tu estado de ánimo en las ciudades más vibrantes de México
             </p>
+            <div className="flex justify-center">
+              <div className="w-24 h-1 bg-gradient-to-r from-transparent via-accent to-transparent rounded-full" />
+            </div>
           </div>
 
-          {/* Content */}
           <div className="flex justify-center">
             {state === "city-selection" && (
-              <div className="w-full max-w-4xl">
+              <div className="w-full max-w-6xl">
                 <CitySelector selectedCity={selectedCity} onCitySelect={handleCitySelect} />
               </div>
             )}
