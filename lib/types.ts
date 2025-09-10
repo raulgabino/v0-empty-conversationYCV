@@ -9,7 +9,7 @@ export type VibeCode =
   | "DEPORTES_JUEGO"
   | "FAMILY_KIDS"
 
-export type CityId = "ciudad-victoria" | "monterrey" | "cdmx"
+export type CityId = "ciudad-victoria" | "monterrey" | "cdmx" | "guadalajara" // agregando guadalajara al tipo CityId
 export type TravelMode = "walking" | "driving"
 
 export interface Coordinates {

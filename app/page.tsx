@@ -24,7 +24,9 @@ export default function HomePage() {
   const { toast } = useToast()
 
   const handleCitySelect = (city: CityId) => {
+    console.log("[v0] City selected:", city) // debug log para verificar selección
     const validation = validateCity(city)
+    console.log("[v0] Validation result:", validation) // debug log para verificar validación
     if (!validation.valid) {
       toast({
         title: "Error",
