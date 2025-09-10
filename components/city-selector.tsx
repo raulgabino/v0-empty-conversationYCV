@@ -37,7 +37,7 @@ const CITIES = [
     name: "Guadalajara",
     subtitle: "Jalisco",
     description: "Mariachi, tequila y tradición tapatía",
-    image: "/guadalajara-jalisco-cathedral-plaza-de-armas-hist.jpg",
+    image: "/guadalajara-jalisco-cathedral-plaza-de-armas-histo.jpg",
     gradient: "from-amber-500/40 to-red-500/40",
   },
 ]
