@@ -7,16 +7,27 @@ import { Textarea } from "@/components/ui/textarea"
 import { Loader2, Lightbulb } from "lucide-react"
 import { validateVibeText } from "@/lib/validation"
 import { SuggestionService } from "@/lib/suggestion-service"
+import { PreviewService } from "@/lib/preview-service"
+import { LivePreview } from "@/components/live-preview"
+import { useDebounce } from "@/hooks/use-debounce"
+import type { CityId } from "@/lib/types"
 
 interface VibeInputProps {
   onSubmit: (text: string) => void
   isLoading?: boolean
-  selectedCity?: string
+  selectedCity?: CityId
 }
 
 export function VibeInput({ onSubmit, isLoading = false, selectedCity }: VibeInputProps) {
   const [text, setText] = useState("")
   const [validationError, setValidationError] = useState<string | null>(null)
+
+  const debouncedText = useDebounce(text, 300)
+
+  const previewPlaces = useMemo(() => {
+    if (!selectedCity || !debouncedText.trim()) return []
+    return PreviewService.filterPlacesByVibe(selectedCity, debouncedText)
+  }, [selectedCity, debouncedText])
 
   const smartSuggestions = useMemo(() => {
     if (!selectedCity) return []
@@ -51,70 +62,82 @@ export function VibeInput({ onSubmit, isLoading = false, selectedCity }: VibeInp
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardContent className="p-6 space-y-6">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-card-foreground">¿Qué traes de vibra hoy?</h2>
-          <p className="text-muted-foreground">
-            Cuéntanos qué tipo de experiencia buscas y te armaremos el plan perfecto
-          </p>
-        </div>
-
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Textarea
-              placeholder="Ej: plan tranqui con café y parque para fotos..."
-              value={text}
-              onChange={(e) => handleTextChange(e.target.value)}
-              className={`min-h-[100px] resize-none ${validationError ? "border-destructive" : ""}`}
-              disabled={isLoading}
-            />
-            {validationError && <p className="text-sm text-destructive">{validationError}</p>}
-            <p className="text-xs text-muted-foreground">{text.length}/500 caracteres</p>
-          </div>
-
-          {selectedCity && filteredSuggestions.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Lightbulb className="h-4 w-4 text-primary" />
-                <p className="text-sm text-muted-foreground">
-                  {text.trim() ? "Sugerencias relacionadas:" : "Ideas para tu ciudad:"}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {filteredSuggestions.map((suggestion, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleSuggestionClick(suggestion.text)}
-                    disabled={isLoading}
-                    className="text-xs hover:bg-primary/10 hover:border-primary/20"
-                  >
-                    {suggestion.text}
-                  </Button>
-                ))}
-              </div>
+    <div className="w-full max-w-4xl mx-auto">
+      <div className="flex gap-6 items-start">
+        <Card className="flex-1">
+          <CardContent className="p-6 space-y-6">
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-bold text-card-foreground">¿Qué traes de vibra hoy?</h2>
+              <p className="text-muted-foreground">
+                Cuéntanos qué tipo de experiencia buscas y te armaremos el plan perfecto
+              </p>
             </div>
-          )}
 
-          <Button
-            onClick={handleSubmit}
-            disabled={!text.trim() || isLoading || !!validationError}
-            className="w-full"
-            size="lg"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creando tu plan...
-              </>
-            ) : (
-              "Armar plan"
-            )}
-          </Button>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Textarea
+                  placeholder="Ej: plan tranqui con café y parque para fotos..."
+                  value={text}
+                  onChange={(e) => handleTextChange(e.target.value)}
+                  className={`min-h-[100px] resize-none ${validationError ? "border-destructive" : ""}`}
+                  disabled={isLoading}
+                />
+                {validationError && <p className="text-sm text-destructive">{validationError}</p>}
+                <p className="text-xs text-muted-foreground">{text.length}/500 caracteres</p>
+              </div>
+
+              {selectedCity && filteredSuggestions.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Lightbulb className="h-4 w-4 text-primary" />
+                    <p className="text-sm text-muted-foreground">
+                      {text.trim() ? "Sugerencias relacionadas:" : "Ideas para tu ciudad:"}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {filteredSuggestions.map((suggestion, index) => (
+                      <Button
+                        key={index}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSuggestionClick(suggestion.text)}
+                        disabled={isLoading}
+                        className="text-xs hover:bg-primary/10 hover:border-primary/20"
+                      >
+                        {suggestion.text}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <Button
+                onClick={handleSubmit}
+                disabled={!text.trim() || isLoading || !!validationError}
+                className="w-full"
+                size="lg"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creando tu plan...
+                  </>
+                ) : (
+                  "Armar plan"
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="hidden md:block">
+          <LivePreview
+            places={previewPlaces}
+            isLoading={debouncedText !== text && text.trim().length > 0}
+            vibeText={debouncedText}
+          />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
