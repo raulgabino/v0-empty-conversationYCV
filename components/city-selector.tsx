@@ -14,7 +14,7 @@ const CITIES = [
     subtitle: "Nuevo León",
     description: "Montañas, museos y cultura regia",
     image: "/monterrey-mexico-cityscape-with-cerro-de-la-silla-.jpg",
-    gradient: "from-blue-500/20 to-purple-500/20",
+    gradient: "from-blue-500/40 to-purple-500/40",
   },
   {
     id: "cdmx" as CityId,
@@ -22,7 +22,7 @@ const CITIES = [
     subtitle: "CDMX",
     description: "Arte, parques y vida cosmopolita",
     image: "/mexico-city-cdmx-skyline-with-colorful-buildings-a.jpg",
-    gradient: "from-emerald-500/20 to-cyan-500/20",
+    gradient: "from-emerald-500/40 to-cyan-500/40",
   },
   {
     id: "ciudad-victoria" as CityId,
@@ -30,7 +30,15 @@ const CITIES = [
     subtitle: "Tamaulipas",
     description: "Historia, naturaleza y tranquilidad",
     image: "/ciudad-victoria-tamaulipas-historic-center-with-co.jpg",
-    gradient: "from-orange-500/20 to-pink-500/20",
+    gradient: "from-orange-500/40 to-pink-500/40",
+  },
+  {
+    id: "guadalajara" as CityId,
+    name: "Guadalajara",
+    subtitle: "Jalisco",
+    description: "Mariachi, tequila y tradición tapatía",
+    image: "/guadalajara-jalisco-cathedral-plaza-de-armas-hist.jpg",
+    gradient: "from-amber-500/40 to-red-500/40",
   },
 ]
 
@@ -63,10 +71,13 @@ export function CitySelector({ selectedCity, onCitySelect }: CitySelectorProps) 
               <div
                 className={`absolute inset-0 bg-gradient-to-t ${city.gradient} group-hover:opacity-80 transition-opacity duration-300`}
               />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-              <div className="absolute bottom-4 left-4 text-white">
-                <h3 className="font-bold text-xl text-shadow-lg">{city.name}</h3>
-                <p className="text-sm opacity-90">{city.subtitle}</p>
+              <div className="absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm">
+                <div className="p-4">
+                  <h3 className="font-bold text-xl text-white">{city.name}</h3>
+                  <p className="text-sm text-white/90">{city.subtitle}</p>
+                </div>
               </div>
             </div>
 
