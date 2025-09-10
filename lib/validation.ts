@@ -3,7 +3,7 @@ import type { UserInput } from "./types"
 
 // Input validation schemas
 export const UserInputSchema = z.object({
-  city_id: z.enum(["ciudad-victoria", "monterrey", "cdmx"]),
+  city_id: z.enum(["ciudad-victoria", "monterrey", "cdmx", "guadalajara"]),
   user_text: z.string().min(1, "El texto no puede estar vacío").max(500, "El texto es demasiado largo"),
   mode: z.enum(["walking", "driving"]).default("walking"),
   max_stops: z.number().int().min(1).max(5).default(4),
@@ -50,7 +50,7 @@ export function validateVibeText(text: string): { valid: boolean; error?: string
 }
 
 export function validateCity(cityId: string): { valid: boolean; error?: string } {
-  const validCities = ["ciudad-victoria", "monterrey", "cdmx"]
+  const validCities = ["ciudad-victoria", "monterrey", "cdmx", "guadalajara"]
 
   if (!cityId) {
     return { valid: false, error: "Por favor selecciona una ciudad" }
