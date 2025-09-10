@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { CitySelector } from "@/components/city-selector"
+import { FeaturedVibeHero } from "@/components/featured-vibe-hero"
 import { VibeInput } from "@/components/vibe-input"
 import { TransportSelector } from "@/components/transport-selector"
 import { ResultsDisplay } from "@/components/results-display"
@@ -12,7 +13,7 @@ import { validateCity, validateVibeText, getErrorMessage } from "@/lib/validatio
 import { useToast } from "@/hooks/use-toast"
 import type { CityId, TravelMode, YCVResponse, UIPresentation } from "@/lib/types"
 
-type AppState = "city-selection" | "transport-selection" | "vibe-input" | "results" | "error"
+type AppState = "city-selection" | "featured-vibe" | "transport-selection" | "vibe-input" | "results" | "error"
 
 export default function HomePage() {
   const [state, setState] = useState<AppState>("city-selection")
@@ -36,7 +37,50 @@ export default function HomePage() {
 
     setSelectedCity(city)
     setError(null)
-    setState("transport-selection")
+    setState("featured-vibe")
+  }
+
+  const handleExploreRoute = async (vibe: string, places: string[]) => {
+    if (!selectedCity) return
+
+    setIsLoading(true)
+    setError(null)
+    setResults(null)
+    setState("results")
+
+    try {
+      const response = await fetch("/api/generate-vibes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          city_id: selectedCity,
+          user_text: vibe,
+          mode: "walking", // Default mode for featured vibe
+          max_stops: 4,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || "Error al generar el plan")
+      }
+
+      const data: YCVResponse = await response.json()
+      setResults(presentForUI(data))
+
+      toast({
+        title: "¡Plan creado!",
+        description: `Encontramos ${data.selection.length} lugares perfectos para ti`,
+      })
+    } catch (error) {
+      console.error("Error generating vibes:", error)
+      const errorMessage = getErrorMessage(error)
+      setError(errorMessage)
+      setState("error")
+      toast({ title: "Error", description: errorMessage, variant: "destructive" })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleModeSelect = (mode: TravelMode) => {
@@ -110,6 +154,10 @@ export default function HomePage() {
     }
   }
 
+  const handleContinueToTransport = () => {
+    setState("transport-selection")
+  }
+
   return (
     <ErrorBoundary>
       <main className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
@@ -132,6 +180,21 @@ export default function HomePage() {
             {state === "city-selection" && (
               <div className="w-full max-w-6xl">
                 <CitySelector selectedCity={selectedCity} onCitySelect={handleCitySelect} />
+              </div>
+            )}
+
+            {state === "featured-vibe" && selectedCity && (
+              <div className="w-full max-w-6xl space-y-8">
+                <FeaturedVibeHero selectedCity={selectedCity} onExploreRoute={handleExploreRoute} />
+                <div className="text-center">
+                  <p className="text-muted-foreground mb-4">¿O prefieres crear tu propia vibra?</p>
+                  <button
+                    onClick={handleContinueToTransport}
+                    className="text-primary hover:text-primary/80 font-medium underline underline-offset-4 transition-colors"
+                  >
+                    Continuar con mi búsqueda personalizada
+                  </button>
+                </div>
               </div>
             )}
 
