@@ -3,7 +3,7 @@ import type { CityId, Place } from "./types"
 
 export class PreviewService {
   static filterPlacesByVibe(cityId: CityId, vibeText: string): Place[] {
-    const city = DATASET.find((c) => c.id === cityId)
+    const city = DATASET.cities.find((c) => c.id === cityId)
     if (!city || !vibeText.trim()) return []
 
     const searchTerms = vibeText.toLowerCase().split(/\s+/)
