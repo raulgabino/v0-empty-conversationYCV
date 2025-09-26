@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, ExternalLink } from "lucide-react"
 import type { UIPresentation } from "@/lib/types"
+import { getPlaceImageUrl } from "@/lib/image-utils"
 
 interface ResultsDisplayProps {
   results: UIPresentation | null
@@ -72,28 +73,42 @@ export function ResultsDisplay({ results, isLoading, onNewSearch }: ResultsDispl
 
       {/* Places Cards */}
       <div className="grid gap-4 md:grid-cols-2">
-        {results.cards.map((card, index) => (
-          <Card key={index} className="hover:shadow-lg transition-shadow duration-200">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg text-card-foreground mb-2">{card.title}</h3>
-                  <p className="text-muted-foreground text-sm">{card.subtitle}</p>
-                </div>
-                <div className="flex items-center gap-2 text-primary">
-                  <span className="text-2xl font-bold">{card.order}</span>
-                </div>
-              </div>
+        {results.cards.map((card, index) => {
+          const cityName = results.header.title.split(" en ")[1]?.split(",")[0] || "México"
+          const imageUrl = getPlaceImageUrl(card, cityName)
 
-              {card.coords && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <MapPin className="h-3 w-3" />
-                  <span>Coordenadas: {card.coords}</span>
+          return (
+            <Card
+              key={index}
+              className="overflow-hidden hover:shadow-lg transition-all duration-200 hover:-translate-y-1"
+            >
+              <div className="relative">
+                <div className="relative h-48 w-full overflow-hidden">
+                  <img src={imageUrl || "/placeholder.svg"} alt={card.title} className="w-full h-full object-cover" />
+                  <div className="absolute top-3 right-3 bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm shadow-lg">
+                    {card.order}
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="font-semibold text-lg text-card-foreground leading-tight">{card.title}</h3>
+                      <p className="text-muted-foreground text-sm mt-1">{card.subtitle}</p>
+                    </div>
+
+                    {card.coords && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t border-border">
+                        <MapPin className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">Coordenadas: {card.coords}</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </div>
+            </Card>
+          )
+        })}
       </div>
 
       {/* Action Buttons */}
