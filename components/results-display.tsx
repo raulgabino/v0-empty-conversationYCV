@@ -77,6 +77,10 @@ export function ResultsDisplay({ results, isLoading, onNewSearch }: ResultsDispl
           const cityName = results.header.title.split(" en ")[1]?.split(",")[0] || "México"
           const imageUrl = getPlaceImageUrl(card, cityName)
 
+          console.log("[v0] Card:", card.title)
+          console.log("[v0] City:", cityName)
+          console.log("[v0] Generated URL:", imageUrl)
+
           return (
             <Card
               key={index}
@@ -84,7 +88,18 @@ export function ResultsDisplay({ results, isLoading, onNewSearch }: ResultsDispl
             >
               <div className="relative">
                 <div className="relative h-48 w-full overflow-hidden">
-                  <img src={imageUrl || "/placeholder.svg"} alt={card.title} className="w-full h-full object-cover" />
+                  <img
+                    src={imageUrl || "/placeholder.svg"}
+                    alt={card.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      console.log("[v0] Image failed to load:", imageUrl)
+                      e.currentTarget.src = "/abstract-place.png"
+                    }}
+                    onLoad={() => {
+                      console.log("[v0] Image loaded successfully:", imageUrl)
+                    }}
+                  />
                   <div className="absolute top-3 right-3 bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm shadow-lg">
                     {card.order}
                   </div>
